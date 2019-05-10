@@ -1,4 +1,5 @@
 package view;
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
@@ -17,6 +18,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.*;
 import javax.swing.JPanel;
 import controller.Controller;
+
 public class DrawingAppPanel extends JPanel
 {
 	private Color currentColor;
@@ -24,110 +26,180 @@ public class DrawingAppPanel extends JPanel
 	private int previousX;
 	private int previousY;
 	private Controller app;
-public DrawingAppPanel(Controller app)
+
+	public DrawingAppPanel(Controller app)
+	{
+		super();
+		this.app = app;
+		this.currentCanvas = new BufferedImage(700, 700, BufferedImage.TYPE_INT_ARGB);
+		setupPanel();
+		resetPoint();
+
+	}
+
+	public void resetPoint()
+	{
+		previousX = Integer.MIN_VALUE;
+		previousY = Integer.MIN_VALUE;
+
+	}
+
+	public void drawDot(int currentX, int currentY, int width)
+	{
+		Graphics2D current = currentCanvas.createGraphics();
+		current.setColor(currentColor);
+		current.setStroke(new BasicStroke(width));
+		current.drawOval(currentX, currentY, width, width);
+		repaint();
+
+	}
+
+	public void drawLine(int currentX, int currentY, int width)
+	{
+		Graphics2D current = currentCanvas.createGraphics();
+		current.setColor(currentColor);
+		current.setStroke(new BasicStroke(width));
+		if (previousX == Integer.MIN_VALUE)
+		{
+			current.drawLine(currentX, currentY, currentX, currentY);
+		}
+		else
+		{
+			current.drawLine(previousX, previousY, currentX, currentY);
+		}
+		previousX = currentX;
+		previousY = currentY;
+		repaint();
+	}
+
+	public void saveImage()
+	{
+		try
+		{
+			JFileChooser saveDialog = new JFileChooser();
+			saveDialog.showSaveDialog(this);
+			String savePath = saveDialog.getSelectedFile().getPath();
+			if (!savePath.endsWith(".png"))
+			{
+				savePath += ".png";
+			}
+			ImageIO.write(currentCanvas, "PNG", new File(savePath));
+		}
+		catch (IOException error)
+		{
+			app.handleErrors(error);
+		}
+		catch (NullPointerException badChoice)
+		{
+			app.handleErrors(badChoice);
+		}
+	}
+
+public void loadImage()
 {
-	super();
-	this.app = app;
-	this.currentCanvas = new BufferedImage(700,700, BufferedImage.TYPE_INT_ARGB);
-	setupPanel();
-	resetPoint();
-	
+	try
+	{
+		JFileChooser imageChooser = new JFileChooser();
+		imageChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		FileFilter imageFilter = new FileNameExtensionFilter("Image files only", ImageIO.getReaderFileSuffixes());
+		imageChooser.setFileFilter(imageFilter);
+		
+		int result = imageChooser.showOpenDialog(this);
+		if(result == JFileChooser.APPROVE_OPTION)
+		{
+			File resultingFile = imageChooser.getSelectedFile();
+			BufferedImage newCanvas = ImageIO.read(resultingFile);
+			currentCanvas = newCanvas;
+			this.setPreferredSize(new Dimension(currentCanvas.getWidth(), currentCanvas.getHeight()));
+		}
+		repaint();
+	}
+	catch(IOException error)
+	{
+		app.handleErrors(error);
+	}
 }
-public void resetPoint()
+public void clearImage()
 {
-	previousX = Integer.MIN_VALUE;
-	previousY = Integer.MIN_VALUE;
-	
-}
-public void drawDot(int currentX, int currentY, int width)
-{
-	Graphics2D current = currentCanvas.createGraphics();
-	current.setColor(currentColor);
-	current.setStroke(new BasicStroke(width));
-	current.drawOval(currentX, currentY, width, width);
+	this.currentCanvas = new BufferedImage(700,700,BufferedImage.TYPE_INT_ARGB);
+	this.setBackground(randomColor());
 	repaint();
 	
 }
-public void drawLine(int currentX, int currentY, int width)
-{
-	Graphics2D current = currentCanvas.createGraphics();
-	current.setColor(currentColor);
-}
-private void setupButtons()
-{
-	
-}
-private void setupPanel()
-{
-	this.setPreferredSize(new Dimension(700,700));
-	this.setBackground(Color.MAGENTA);
-	this.currentColor = Color.GREEN;
-	
-}
-public void setCurrentColor(String color)
-{
-	if(color.equalsIgnoreCase("Black"))
-	{
-		currentColor = Color.BLACK;
+
+	private void setupButtons()
+	{ 
+
 	}
-	else if(color.equalsIgnoreCase("Purple"))
+
+	private void setupPanel()
 	{
-		currentColor = new Color(75, 0, 130);
+		this.setPreferredSize(new Dimension(700, 700));
+		this.setBackground(Color.MAGENTA);
+		this.currentColor = Color.GREEN;
+
 	}
-	else if(color.equalsIgnoreCase("Red"))
+
+	public void setCurrentColor(String color)
 	{
-		currentColor = Color.RED;
-	}
-	else if(color.equalsIgnoreCase("Green"))
-	{
-		currentColor = Color.GREEN;
-	}
-	else if(color.equalsIgnoreCase("Blue"))
-	{
-		currentColor = Color.BLUE;
-	}
-	else if(color.equalsIgnoreCase("Orange"))
-	{
-		currentColor = Color.ORANGE;
-	}
-	else if(color.equalsIgnoreCase("Yellow"))
-	{
-		currentColor = Color.YELLOW;
-	}
-	else
-	{
-		currentColor = randomColor();
-	}
-}
-private Color randomColor()
-{
-	int red = (int)(Math.random()*256);
-	int green = (int)(Math.random()*256);
-	int blue = (int)(Math.random()*256);
-	int alpha = (int)(Math.random()*256);
-	Color randomColor = new Color(red,green,blue,alpha);
-	return randomColor;
-}
-@Override
-protected void paintComponent(Graphics graphics)
-{
-	super.paintComponent(graphics);
-	graphics.drawImage(currentCanvas, 0, 0, null);
-}
-private void setupLayout()
-{
-	
-	
-}
-private void setupListeners()
-{
-canvas.addMouseListener(new MouseListener()
+		if (color.equalsIgnoreCase("Black"))
 		{
-	
-	
-	
-		})	
-	
-		
-}
+			currentColor = Color.BLACK;
+		}
+		else if (color.equalsIgnoreCase("Purple"))
+		{
+			currentColor = new Color(75, 0, 130);
+		}
+		else if (color.equalsIgnoreCase("Red"))
+		{
+			currentColor = Color.RED;
+		}
+		else if (color.equalsIgnoreCase("Green"))
+		{
+			currentColor = Color.GREEN;
+		}
+		else if (color.equalsIgnoreCase("Blue"))
+		{
+			currentColor = Color.BLUE;
+		}
+		else if (color.equalsIgnoreCase("Orange"))
+		{
+			currentColor = Color.ORANGE;
+		}
+		else if (color.equalsIgnoreCase("Yellow"))
+		{
+			currentColor = Color.YELLOW;
+		}
+		else
+		{
+			currentColor = randomColor();
+		}
+	}
+
+	private Color randomColor()
+	{
+		int red = (int) (Math.random() * 256);
+		int green = (int) (Math.random() * 256);
+		int blue = (int) (Math.random() * 256);
+		int alpha = (int) (Math.random() * 256);
+		Color randomColor = new Color(red, green, blue, alpha);
+		return randomColor;
+	}
+
+	@Override
+	protected void paintComponent(Graphics graphics)
+	{
+		super.paintComponent(graphics);
+		graphics.drawImage(currentCanvas, 0, 0, null);
+	}
+
+	private void setupLayout()
+	{
+
+	}
+
+	private void setupListeners()
+	{
+
+	}
 }
